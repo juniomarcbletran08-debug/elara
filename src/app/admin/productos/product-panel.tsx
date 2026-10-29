@@ -56,7 +56,7 @@ export function ProductPanel(){
         if(!response.ok||typeof data.url!=="string")throw new Error(data.error||"No se pudo subir "+file.name+".");
         urls.push(data.url);
       }
-      setForm(old=>({...old,images:[...old.images.split(/\\n|,/).map(v=>v.trim()).filter(Boolean),...urls].join("\\n")}));
+      setForm(old=>({...old,images:[...old.images.split(/\n|,/).map(v=>v.trim()).filter(Boolean),...urls].join("\n")}));
       setNotice("Imagen(es) subida(s) a Supabase Storage. Guarda el producto para asociarlas.");
     }catch(e){setError(e instanceof Error?e.message:"Error de carga.");}
     finally{setUploading(false);}
