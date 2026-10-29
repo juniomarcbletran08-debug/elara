@@ -1,47 +1,41 @@
-# ÉLARA — Vístete de ti
+# ÉLARA — Boutique de demostración
 
-Boutique digital de moda femenina con una dirección visual de glamour discreto: crema, champán, tipografía editorial y fotografía protagonista.
+Tienda frontend de moda femenina con dirección visual de glamour discreto: crema, champán, tipografía editorial y fotografía protagonista.
 
-## Estado actual
+## Modo de demostración
 
-La rama \`main\` contiene una nueva experiencia de tienda creada desde cero. Incluye catálogo de demostración, filtros por categoría, búsqueda, favoritos de sesión, selección de talla, bolsa de compra y formulario de interés. No procesa pagos ni guarda pedidos reales.
+ÉLARA funciona como una página frontend independiente. **No utiliza Supabase, base de datos, API de pagos ni credenciales externas.** El catálogo es de muestra y vive en el código del proyecto.
 
-**No está lista para vender todavía.** Antes de habilitar pedidos hay que confirmar el proyecto correcto de Supabase, revisar el esquema existente y Storage, configurar credenciales de servidor en Vercel, crear autenticación administrativa segura y conectar Mercado Pago en modo de prueba con webhooks verificados.
+Incluye:
+- Catálogo con 48 productos de demostración en cuatro categorías.
+- Búsqueda y filtros por categoría.
+- Favoritos durante la sesión.
+- Selector de tallas y bolsa de compra con cantidades y subtotal.
+- Formulario visual de interés que no envía ni guarda correos.
+- Diseño adaptable a móviles y escritorio.
+
+Los nombres, precios, disponibilidad y fotografías son ilustrativos; no representan inventario real. El botón de pago solo informa que los cobros no están habilitados. No se reciben pedidos ni se procesa dinero.
 
 ## Requisitos
 
 - Node.js 22
 - npm
-- Git
 
-## Desarrollo local
+## Ejecutar localmente
 
-\`\`\`bash
+```bash
 npm install
-cp .env.example .env.local
 npm run dev
-\`\`\`
+```
 
-Abre \`http://localhost:3000\`.
+Abre `http://localhost:3000`.
 
 ## Verificaciones
 
-\`\`\`bash
+```bash
 npm run typecheck
 npm test
 npm run build
-\`\`\`
+```
 
-## Servicios externos y secretos
-
-No se han modificado recursos de Supabase, Vercel ni Mercado Pago. El proyecto de Supabase descrito por la documentación anterior no apareció entre los proyectos accesibles con la conexión actual; no se asumió que una base de datos distinta fuera la correcta. El proyecto de Vercel llamado \`elara\` tampoco fue encontrado en el ámbito actualmente conectado.
-
-No pongas claves reales en el repositorio. Cuando se recupere el acceso al proyecto externo correcto, configura los valores desde los paneles oficiales y usa solo variables de servidor para credenciales privilegiadas. Las variables públicas \`NEXT_PUBLIC_*\` nunca deben contener secretos.
-
-## Próximas fases
-
-1. Confirmar el proyecto real de Supabase y hacer inventario de tablas, políticas y bucket sin borrar datos.
-2. Configurar el acceso de servidor con credenciales verificadas y añadir migraciones revisables.
-3. Implementar autenticación administrativa, gestión de productos/fotos/inventario y pedidos.
-4. Conectar Mercado Pago en sandbox; verificar firma, monto, moneda, referencia e idempotencia de notificaciones.
-5. Ejecutar pruebas completas, revisar accesibilidad, móvil, privacidad y política de envíos antes de activar ventas.
+No se requieren variables de entorno ni credenciales para ejecutar esta demo.

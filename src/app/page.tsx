@@ -74,7 +74,7 @@ export default function HomePage() {
 
   return (
     <main>
-      <div className="announcement"><span>Una pequeña dosis de belleza para todos tus días</span><span className="announcement-right">ENVÍOS A TODO EL PERÚ · COLECCIÓN 2026</span></div>
+      <div className="announcement"><span>Una pequeña dosis de belleza para todos tus días</span><span className="announcement-right">DEMO DE BOUTIQUE · COLECCIÓN DE REFERENCIA</span></div>
       <header className="site-header">
         <button className="icon-button mobile-menu-button" aria-label="Abrir menú" onClick={() => setMobileMenu(!mobileMenu)}><Icon name="menu" /></button>
         <a className="wordmark" href="#" aria-label="ÉLARA inicio">ÉLARA<span className="wordmark-dot">.</span><small>VÍSTETE DE TI</small></a>
@@ -107,7 +107,7 @@ export default function HomePage() {
 
       <section className="promise-strip" aria-label="Beneficios de ÉLARA">
         <div><span className="promise-icon">✳</span><p><strong>Selección especial</strong><small>Piezas elegidas con intención</small></p></div>
-        <div><span className="promise-icon">♡</span><p><strong>Compra con confianza</strong><small>Atención cercana y transparente</small></p></div>
+        <div><span className="promise-icon">♡</span><p><strong>Experiencia de demostración</strong><small>Atención cercana y transparente</small></p></div>
         <div><span className="promise-icon">✧</span><p><strong>Envíos nacionales</strong><small>Tu próximo favorito va contigo</small></p></div>
       </section>
 
@@ -116,7 +116,7 @@ export default function HomePage() {
           <div><p className="eyebrow">DESCUBRE TU PRÓXIMO FAVORITO</p><h2>La colección <em>ÉLARA</em></h2></div>
           <p className="section-intro">Un guardarropa con intención.<br />Detalles que hablan de ti.</p>
         </div>
-        <p className="catalog-disclaimer">Catálogo de demostración · precios y disponibilidad por confirmar</p>
+        <p className="catalog-disclaimer">Catálogo de demostración · imágenes de referencia · precios ilustrativos en S/</p>
         <div className="collection-toolbar">
           <div className="category-tabs" role="group" aria-label="Filtrar por categoría">
             {categories.map((item) => <button key={item} className={category === item ? "category-tab active" : "category-tab"} onClick={() => setCategory(item)}>{item}</button>)}
@@ -149,9 +149,9 @@ export default function HomePage() {
       <section className="newsletter" id="newsletter">
         <div className="newsletter-mark"><Icon name="sparkle" size={25} /></div>
         <p className="eyebrow">UNA NOTA BONITA PARA TI</p><h2>Un lugar para las <em>cosas bonitas.</em></h2>
-        <p className="newsletter-copy">Sé parte del Club ÉLARA y entérate primero de las nuevas colecciones, novedades y sorpresas especiales.</p>
-        {subscribed ? <div className="subscribe-success" role="status">Gracias por acercarte a ÉLARA. Pronto tendremos novedades para ti.</div> : <form className="newsletter-form" onSubmit={subscribe}><label className="sr-only" htmlFor="email">Tu correo electrónico</label><input id="email" type="email" required placeholder="Tu correo electrónico" value={email} onChange={(event) => setEmail(event.target.value)} /><button type="submit" aria-label="Suscribirme">Quiero estar al tanto <Icon name="arrow" size={16} /></button></form>}
-        <small className="privacy-note">Con cariño, sin ruido. Puedes darte de baja cuando quieras.</small>
+        <p className="newsletter-copy">Prueba la experiencia del Club ÉLARA. Este formulario es demostrativo y no registra correos.</p>
+        {subscribed ? <div className="subscribe-success" role="status">¡Gracias por probar ÉLARA! En esta demostración no se envió ni guardó tu correo.</div> : <form className="newsletter-form" onSubmit={subscribe}><label className="sr-only" htmlFor="email">Tu correo electrónico</label><input id="email" type="email" required placeholder="Tu correo electrónico" value={email} onChange={(event) => setEmail(event.target.value)} /><button type="submit" aria-label="Suscribirme">Quiero estar al tanto <Icon name="arrow" size={16} /></button></form>}
+        <small className="privacy-note">Demostración local · tus datos no se envían a ningún servidor.</small>
       </section>
 
       <footer className="site-footer">

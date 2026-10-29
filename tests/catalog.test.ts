@@ -2,6 +2,11 @@ import { describe, expect, it } from "vitest";
 import { categories, filterProducts, formatPrice, products } from "../src/lib/catalog";
 
 describe("ÉLARA catalog", () => {
+  it("contains a large demo catalog", () => {
+    expect(products.length).toBeGreaterThanOrEqual(45);
+    expect(new Set(products.map((product) => product.id)).size).toBe(products.length);
+  });
+
   it("includes the expected category filters", () => {
     expect(categories).toEqual(["Todo", "Vestidos", "Blusas", "Conjuntos", "Accesorios"]);
   });
