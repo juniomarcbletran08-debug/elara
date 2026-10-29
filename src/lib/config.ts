@@ -3,6 +3,7 @@ const envName = process.env.NEXT_PUBLIC_STORE_NAME?.trim();
 export const STORE = {
   name: envName || "ÉLARA",
   descriptor: "Fashion Boutique",
+  paymentDescriptor: (envName || "ÉLARA").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Za-z0-9 ]/g, "").slice(0, 13) || "ELARA",
   tagline: "Estilo que trasciende temporadas.",
   currency: "PEN",
   locale: "es-PE",
