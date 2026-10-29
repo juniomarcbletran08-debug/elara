@@ -35,6 +35,7 @@ export async function POST(request:Request){
   payment=await res.json() as Payment;
  }catch{return jsonError("No se pudo consultar el estado del pago.",502)}
  if(!payment||String(payment.id)!==dataId)return jsonError("Respuesta del proveedor no válida.",502);
+ if(typeof payment.external_reference!=="string"||!payment.external_reference)return jsonError("El pago no contiene una referencia de pedido.",400);
  const db=await getDb().catch(()=>null);if(!db)return jsonError("Base de datos no disponible.",503);
  const eventKey=String(body.id??(String(payment.id)+":"+String(body.action??payment.status)));
  try{
@@ -45,13 +46,14 @@ export async function POST(request:Request){
   if(!order)return jsonError("El pedido asociado no existe.",404);
   const expectedLive=mode==="production";const amount=Math.round(Number(payment.transaction_amount)*100);
   if(payment.currency_id!=="PEN"||amount!==Number(order.total_cents)||Boolean(payment.live_mode)!==expectedLive)return jsonError("El monto, moneda o entorno del pago no coincide con el pedido.",409);
-  const paymentRow=await db.prepare("SELECT id FROM payments WHERE provider=? AND provider_payment_id=?").bind("mercadopago",String(payment.id)).first<{id:string}>();
+  let paymentRow=await db.prepare("SELECT id FROM payments WHERE provider=? AND provider_payment_id=? LIMIT 1").bind("mercadopago",String(payment.id)).first<{id:string}>();
+  if(!paymentRow)paymentRow=await db.prepare("SELECT id FROM payments WHERE provider=? AND order_id=? AND provider_payment_id IS NULL ORDER BY created_at DESC LIMIT 1").bind("mercadopago",order.id).first<{id:string}>();
   const paymentId=paymentRow?.id||crypto.randomUUID();
   const statements=[];
   statements.push(db.prepare(paymentRow
-    ?"UPDATE payments SET status=?,amount_cents=?,raw_status=?,updated_at=CURRENT_TIMESTAMP WHERE id=?"
+    ?"UPDATE payments SET provider_payment_id=?,status=?,amount_cents=?,raw_status=?,updated_at=CURRENT_TIMESTAMP WHERE id=?"
     :"INSERT INTO payments(id,order_id,provider,provider_payment_id,status,amount_cents,raw_status) VALUES(?,?,?,?,?,?,?)"
-  ).bind(...(paymentRow?[payment.status,amount,payment.status_detail||"",paymentId]:[paymentId,order.id,"mercadopago",String(payment.id),payment.status,amount,payment.status_detail||""])));
+  ).bind(...(paymentRow?[String(payment.id),payment.status,amount,payment.status_detail||"",paymentId]:[paymentId,order.id,"mercadopago",String(payment.id),payment.status,amount,payment.status_detail||""])));
   if(payment.status==="approved"){
    statements.push(db.prepare("UPDATE product_variants SET stock_on_hand=stock_on_hand-(SELECT COALESCE(SUM(oi.quantity),0) FROM order_items oi WHERE oi.order_id=? AND oi.variant_id=product_variants.id),stock_reserved=MAX(0,stock_reserved-(SELECT COALESCE(SUM(oi.quantity),0) FROM order_items oi WHERE oi.order_id=? AND oi.variant_id=product_variants.id)) WHERE id IN (SELECT variant_id FROM order_items WHERE order_id=? AND variant_id IS NOT NULL) AND EXISTS(SELECT 1 FROM orders WHERE id=? AND payment_status='pending')").bind(order.id,order.id,order.id,order.id));
    statements.push(db.prepare("UPDATE orders SET payment_status='approved',status='paid',updated_at=CURRENT_TIMESTAMP WHERE id=? AND payment_status='pending'").bind(order.id));
