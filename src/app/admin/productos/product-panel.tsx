@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { AdminVariants } from "@/components/admin-variants";
 
 type Product={id:string;name:string;slug:string;description:string;category_id:string|null;price_cents:number;sale_price_cents:number|null;sku:string;status:"draft"|"published"|"archived";images_json:string};
+type CategoryOption={id:string;name:string};
 const empty={name:"",description:"",sku:"",price:"",salePrice:"",categoryId:"",images:"",status:"draft"};
 function money(cents:number){return new Intl.NumberFormat("es-PE",{style:"currency",currency:"PEN"}).format(cents/100)}
 function imageList(raw:string){try{const v:unknown=JSON.parse(raw);return Array.isArray(v)?v.filter((x):x is string=>typeof x==="string"):[]}catch{return[]}}
@@ -25,6 +26,7 @@ async function optimizeImage(file:File):Promise<File>{
 export function ProductPanel(){
   const router=useRouter();
   const [products,setProducts]=useState<Product[]>([]);
+  const [categories,setCategories]=useState<CategoryOption[]>([]);
   const [form,setForm]=useState(empty);
   const [editing,setEditing]=useState<string|null>(null);
   const [variantProduct,setVariantProduct]=useState<{id:string;name:string}|null>(null);
@@ -32,7 +34,7 @@ export function ProductPanel(){
   const [notice,setNotice]=useState("");
   const [loading,setLoading]=useState(true);
   const [uploading,setUploading]=useState(false);
-  async function load(){setLoading(true);try{const res=await fetch("/api/admin/products",{cache:"no-store"});if(res.status===401){router.replace("/admin/login");return;}const data=await res.json();if(!res.ok)throw new Error(data.error||"No se pudo cargar el catálogo.");setProducts(data.products||[]);}catch(e){setError(e instanceof Error?e.message:"Error de red.");}finally{setLoading(false);}}
+  async function load(){setLoading(true);try{const res=await fetch("/api/admin/products",{cache:"no-store"});if(res.status===401){router.replace("/admin/login");return;}const data=await res.json();if(!res.ok)throw new Error(data.error||"No se pudo cargar el catálogo.");setProducts(data.products||[]);const catRes=await fetch("/api/admin/categories",{cache:"no-store"});if(catRes.status===401){router.replace("/admin/login");return;}if(catRes.ok){const cats=await catRes.json();setCategories(cats.categories||[]);}}catch(e){setError(e instanceof Error?e.message:"Error de red.");}finally{setLoading(false);}}
   useEffect(()=>{void load();},[]);
   function change(field:keyof typeof empty,value:string){setForm(old=>({...old,[field]:value}));}
   function reset(){setEditing(null);setForm(empty);setError("");}
@@ -81,8 +83,8 @@ export function ProductPanel(){
       <div className="admin-field"><label htmlFor="sku">SKU (único)</label><input id="sku" value={form.sku} onChange={e=>change("sku",e.target.value)} minLength={2} maxLength={64} pattern="[A-Za-z0-9_-]+" required/></div>
       <div className="admin-field"><label htmlFor="price">Precio normal (S/)</label><input id="price" type="number" min="0" step="0.01" value={form.price} onChange={e=>change("price",e.target.value)} required/></div>
       <div className="admin-field"><label htmlFor="sale">Precio promocional (S/)</label><input id="sale" type="number" min="0" step="0.01" value={form.salePrice} onChange={e=>change("salePrice",e.target.value)} placeholder="Opcional"/></div>
-      <div className="admin-field"><label htmlFor="category">ID de categoría (opcional)</label><input id="category" value={form.categoryId} onChange={e=>change("categoryId",e.target.value)}/></div>
-      <div className="admin-field"><label htmlFor="status">Publicación</label><select id="status" value={form.status} onChange={e=>change("status",e.target.value)}><option value="draft">Borrador</option><option value="published">Publicado</option>{editing&&<option value="archived">Archivado</option>}</select></div>
+      <div className="admin-field"><label htmlFor="category">Categoría (opcional)</label><select id="category" value={form.categoryId} onChange={e=>change("categoryId",e.target.value)}><option value="">Sin categoría</option>{categories.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
+      <div className="admin-field"><label htmlFor="status">Publicación</label><select id="status" value={form.status} onChange={e=>change("status",e.target.value)}><option value="draft">Borrador</option><option value="published" disabled={!editing}>Publicado (configura variantes primero)</option>{editing&&<option value="archived">Archivado</option>}</select></div>
       <div className="admin-field admin-full"><label htmlFor="description">Descripción</label><textarea id="description" value={form.description} onChange={e=>change("description",e.target.value)} maxLength={5000}/></div>
       <div className="admin-field admin-full"><label htmlFor="images">Imágenes (URL HTTPS, una por línea)</label><textarea id="images" value={form.images} onChange={e=>change("images",e.target.value)} placeholder="https://..."/></div>
       <div className="admin-field admin-full"><label htmlFor="image-files">Subir fotografías a R2 (JPEG, PNG, WEBP o AVIF; máximo 8 MB por archivo)</label><input id="image-files" type="file" accept="image/jpeg,image/png,image/webp,image/avif" multiple disabled={uploading} onChange={e=>{void uploadFiles(e.target.files);e.currentTarget.value="";}}/><p className="admin-muted">{uploading?"Subiendo imagen(es)…":"Las URL resultantes se añadirán al campo anterior; pulsa Guardar para asociarlas al producto."}</p></div>
