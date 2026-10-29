@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { AdminVariants } from "@/components/admin-variants";
 
@@ -34,10 +34,12 @@ export function ProductPanel(){
   const [notice,setNotice]=useState("");
   const [loading,setLoading]=useState(true);
   const [uploading,setUploading]=useState(false);
+  const [selectedFileNames,setSelectedFileNames]=useState<string[]>([]);
+  const filePicker = useRef<HTMLInputElement>(null);
   async function load(){setLoading(true);try{const res=await fetch("/api/admin/products",{cache:"no-store"});if(res.status===401){router.replace("/admin/login");return;}const data=await res.json();if(!res.ok)throw new Error(data.error||"No se pudo cargar el catálogo.");setProducts(data.products||[]);const catRes=await fetch("/api/admin/categories",{cache:"no-store"});if(catRes.status===401){router.replace("/admin/login");return;}if(catRes.ok){const cats=await catRes.json();setCategories(cats.categories||[]);}}catch(e){setError(e instanceof Error?e.message:"Error de red.");}finally{setLoading(false);}}
   useEffect(()=>{void load();},[]);
   function change(field:keyof typeof empty,value:string){setForm(old=>({...old,[field]:value}));}
-  function reset(){setEditing(null);setForm(empty);setError("");}
+  function reset(){setEditing(null);setForm(empty);setError("");setSelectedFileNames([]);}
   function edit(p:Product){const imgs=imageList(p.images_json);setEditing(p.id);setForm({name:p.name,description:p.description,sku:p.sku,price:(p.price_cents/100).toFixed(2),salePrice:p.sale_price_cents===null?"":(p.sale_price_cents/100).toFixed(2),categoryId:p.category_id||"",images:imgs.join("\n"),status:p.status});setError("");setNotice("");window.scrollTo({top:0,behavior:"smooth"});}
   async function uploadFiles(fileList:FileList|null){
     if(!fileList||fileList.length===0)return;
@@ -55,7 +57,7 @@ export function ProductPanel(){
         urls.push(data.url);
       }
       setForm(old=>({...old,images:[...old.images.split(/\\n|,/).map(v=>v.trim()).filter(Boolean),...urls].join("\\n")}));
-      setNotice("Imagen(es) subida(s) a R2. Guarda el producto para asociarlas.");
+      setNotice("Imagen(es) subida(s) a Supabase Storage. Guarda el producto para asociarlas.");
     }catch(e){setError(e instanceof Error?e.message:"Error de carga.");}
     finally{setUploading(false);}
   }
@@ -86,8 +88,8 @@ export function ProductPanel(){
       <div className="admin-field"><label htmlFor="category">Categoría (opcional)</label><select id="category" value={form.categoryId} onChange={e=>change("categoryId",e.target.value)}><option value="">Sin categoría</option>{categories.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
       <div className="admin-field"><label htmlFor="status">Publicación</label><select id="status" value={form.status} onChange={e=>change("status",e.target.value)}><option value="draft">Borrador</option><option value="published" disabled={!editing}>Publicado (configura variantes primero)</option>{editing&&<option value="archived">Archivado</option>}</select></div>
       <div className="admin-field admin-full"><label htmlFor="description">Descripción</label><textarea id="description" value={form.description} onChange={e=>change("description",e.target.value)} maxLength={5000}/></div>
-      <div className="admin-field admin-full"><label htmlFor="images">Imágenes (URL HTTPS, una por línea)</label><textarea id="images" value={form.images} onChange={e=>change("images",e.target.value)} placeholder="https://..."/></div>
-      <div className="admin-field admin-full"><label htmlFor="image-files">Subir fotografías a R2 (JPEG, PNG, WEBP o AVIF; máximo 8 MB por archivo)</label><input id="image-files" type="file" accept="image/jpeg,image/png,image/webp,image/avif" multiple disabled={uploading} onChange={e=>{void uploadFiles(e.target.files);e.currentTarget.value="";}}/><p className="admin-muted">{uploading?"Subiendo imagen(es)…":"Las URL resultantes se añadirán al campo anterior; pulsa Guardar para asociarlas al producto."}</p></div>
+      <div className="admin-field admin-full"><label htmlFor="images">Fotos del producto (enlaces de imagen)</label><textarea id="images" value={form.images} onChange={e=>change("images",e.target.value)} placeholder="Al elegir fotos de tu computadora, los enlaces aparecerán aquí."/></div>
+      <div className="admin-field admin-full"><label htmlFor="image-files">Fotos desde tu computadora</label><input ref={filePicker} id="image-files" type="file" accept="image/jpeg,image/png,image/webp,image/avif" multiple disabled={uploading} style={{position:"absolute",width:1,height:1,padding:0,margin:-1,overflow:"hidden",clip:"rect(0, 0, 0, 0)",whiteSpace:"nowrap",border:0}} onChange={e=>{const input=e.currentTarget;const files=input.files;setSelectedFileNames(files?Array.from(files).map(file=>file.name):[]);void uploadFiles(files);input.value="";}}/><button className="button" type="button" onClick={()=>filePicker.current?.click()} disabled={uploading}>{uploading?"Subiendo fotos…":"Elegir fotos de mi computadora"}</button><p className="admin-muted">{uploading?"Subiendo las fotos elegidas…":"Pulsa el botón para abrir los archivos de tu computadora. Selecciona una o varias fotos; se subirán automáticamente. Después pulsa Crear producto para guardar el producto y sus fotos."}</p>{selectedFileNames.length>0&&<p className="admin-muted">Archivos seleccionados: {selectedFileNames.join(", ")}</p>}</div>
       {error&&<p className="admin-error admin-full" role="alert">{error}</p>}
       {notice&&<p className="admin-success admin-full" role="status">{notice}</p>}
       <div className="admin-actions admin-full"><button className="button" type="submit">{editing?"Guardar cambios":"Crear producto"}</button>{editing&&<button className="button" type="button" onClick={reset}>Cancelar edición</button>}</div>
