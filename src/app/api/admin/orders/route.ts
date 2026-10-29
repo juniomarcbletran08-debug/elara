@@ -11,11 +11,12 @@ export async function PATCH(request:Request){
  let b:unknown;try{b=await request.json()}catch{return Response.json({error:"JSON inválido."},{status:400})}
  if(!b||typeof b!=="object"||!("id" in b)||!("status" in b))return Response.json({error:"Datos incompletos."},{status:400});
  const {id,status} = b as {id:unknown;status:unknown};
- if(typeof id!=="string"||id.length>128||(status!=="fulfilled"&&status!=="cancelled"))return Response.json({error:"Transición de estado no permitida."},{status:400});
+ if(typeof id!=="string"||id.length>128||(status!=="confirmed"&&status!=="fulfilled"&&status!=="cancelled"))return Response.json({error:"Transición de estado no permitida."},{status:400});
  try{
   const db=await getDb();const order=await db.prepare("SELECT id,status,payment_status,channel FROM orders WHERE id=?").bind(id).first<{id:string;status:string;payment_status:string;channel:string}>();
   if(!order)return Response.json({error:"Pedido no encontrado."},{status:404});
-  if(status==="fulfilled"&&order.payment_status!=="approved")return Response.json({error:"Solo puedes completar un pedido con pago aprobado."},{status:409});
+  if(status==="confirmed"&&(order.channel!=="whatsapp"||order.status!=="pending_confirmation"))return Response.json({error:"Solo puedes confirmar solicitudes de WhatsApp pendientes."},{status:409});
+  if(status==="fulfilled"&&!(order.payment_status==="approved"||(order.channel==="whatsapp"&&order.status==="confirmed")))return Response.json({error:"Para completar una entrega, el pago online debe estar aprobado o la solicitud de WhatsApp debe estar confirmada."},{status:409});
   if(status==="cancelled"&&order.payment_status==="approved")return Response.json({error:"Un pedido pagado requiere el proceso de devolución correspondiente; no se cancela desde este panel."},{status:409});
   if(status==="cancelled"&&order.payment_status==="pending"){
    const statements=[];
@@ -23,7 +24,7 @@ export async function PATCH(request:Request){
    statements.push(db.prepare("UPDATE orders SET status='cancelled',payment_status='cancelled',updated_at=CURRENT_TIMESTAMP WHERE id=? AND payment_status='pending'").bind(id));
    await db.batch(statements);
   }else{
-   const result=await db.prepare("UPDATE orders SET status=?,updated_at=CURRENT_TIMESTAMP WHERE id=? AND payment_status=?").bind(status,id,order.payment_status).run();
+   const result=await db.prepare("UPDATE orders SET status=?,updated_at=CURRENT_TIMESTAMP WHERE id=? AND payment_status=? AND status=?").bind(status,id,order.payment_status,order.status).run();
    if(!result.meta?.changes)return Response.json({error:"El estado del pedido cambió; recarga y vuelve a intentarlo."},{status:409});
   }
   return Response.json({updated:true},{headers:{"Cache-Control":"no-store"}});
