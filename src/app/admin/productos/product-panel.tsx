@@ -16,11 +16,30 @@ export function ProductPanel(){
   const [error,setError]=useState("");
   const [notice,setNotice]=useState("");
   const [loading,setLoading]=useState(true);
+  const [uploading,setUploading]=useState(false);
   async function load(){setLoading(true);try{const res=await fetch("/api/admin/products",{cache:"no-store"});if(res.status===401){router.replace("/admin/login");return;}const data=await res.json();if(!res.ok)throw new Error(data.error||"No se pudo cargar el catálogo.");setProducts(data.products||[]);}catch(e){setError(e instanceof Error?e.message:"Error de red.");}finally{setLoading(false);}}
   useEffect(()=>{void load();},[]);
   function change(field:keyof typeof empty,value:string){setForm(old=>({...old,[field]:value}));}
   function reset(){setEditing(null);setForm(empty);setError("");}
   function edit(p:Product){const imgs=imageList(p.images_json);setEditing(p.id);setForm({name:p.name,description:p.description,sku:p.sku,price:(p.price_cents/100).toFixed(2),salePrice:p.sale_price_cents===null?"":(p.sale_price_cents/100).toFixed(2),categoryId:p.category_id||"",images:imgs.join("\n"),status:p.status});setError("");setNotice("");window.scrollTo({top:0,behavior:"smooth"});}
+  async function uploadFiles(fileList:FileList|null){
+    if(!fileList||fileList.length===0)return;
+    setError("");setNotice("");setUploading(true);
+    const urls:string[]=[];
+    try{
+      for(const file of Array.from(fileList)){
+        const formData=new FormData();formData.append("file",file);
+        const response=await fetch("/api/admin/uploads",{method:"POST",body:formData,cache:"no-store"});
+        const data=await response.json().catch(()=>({}));
+        if(response.status===401){router.replace("/admin/login");return;}
+        if(!response.ok||typeof data.url!=="string")throw new Error(data.error||"No se pudo subir "+file.name+".");
+        urls.push(data.url);
+      }
+      setForm(old=>({...old,images:[...old.images.split(/\\n|,/).map(v=>v.trim()).filter(Boolean),...urls].join("\\n")}));
+      setNotice("Imagen(es) subida(s) a R2. Guarda el producto para asociarlas.");
+    }catch(e){setError(e instanceof Error?e.message:"Error de carga.");}
+    finally{setUploading(false);}
+  }
   async function submit(e:FormEvent<HTMLFormElement>){
     e.preventDefault();setError("");setNotice("");
     const price=Number(form.price);const sale=form.salePrice.trim()===""?null:Number(form.salePrice);
@@ -49,6 +68,7 @@ export function ProductPanel(){
       <div className="admin-field"><label htmlFor="status">Publicación</label><select id="status" value={form.status} onChange={e=>change("status",e.target.value)}><option value="draft">Borrador</option><option value="published">Publicado</option>{editing&&<option value="archived">Archivado</option>}</select></div>
       <div className="admin-field admin-full"><label htmlFor="description">Descripción</label><textarea id="description" value={form.description} onChange={e=>change("description",e.target.value)} maxLength={5000}/></div>
       <div className="admin-field admin-full"><label htmlFor="images">Imágenes (URL HTTPS, una por línea)</label><textarea id="images" value={form.images} onChange={e=>change("images",e.target.value)} placeholder="https://..."/></div>
+      <div className="admin-field admin-full"><label htmlFor="image-files">Subir fotografías a R2 (JPEG, PNG, WEBP o AVIF; máximo 8 MB por archivo)</label><input id="image-files" type="file" accept="image/jpeg,image/png,image/webp,image/avif" multiple disabled={uploading} onChange={e=>{void uploadFiles(e.target.files);e.currentTarget.value="";}}/><p className="admin-muted">{uploading?"Subiendo imagen(es)…":"Las URL resultantes se añadirán al campo anterior; pulsa Guardar para asociarlas al producto."}</p></div>
       {error&&<p className="admin-error admin-full" role="alert">{error}</p>}
       {notice&&<p className="admin-success admin-full" role="status">{notice}</p>}
       <div className="admin-actions admin-full"><button className="button" type="submit">{editing?"Guardar cambios":"Crear producto"}</button>{editing&&<button className="button" type="button" onClick={reset}>Cancelar edición</button>}</div>
