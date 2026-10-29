@@ -10,7 +10,7 @@ La portada utiliza imágenes editoriales ilustrativas externas; no representan s
 
 ## Requisitos
 
-- Node.js 20.9 o superior.
+- Node.js 22.12 o superior (requisito para la versión actual de Vitest).
 - Cloudflare para Workers, D1 y R2.
 - Cuenta Mercado Pago Perú para credenciales de prueba y notificaciones.
 - Cuenta GitHub y dominio personalizado opcional.
