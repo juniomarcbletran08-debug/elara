@@ -37,7 +37,6 @@ export async function POST(request:Request){
   if(status==="published")return Response.json({error:"Crea primero el producto como borrador, añade una imagen y una variante activa con stock, y publícalo editándolo después."},{status:400});
   const images=validImages(body.images);
   if(!images)return Response.json({error:"Las imágenes deben ser URL HTTPS válidas (máximo 12)."},{status:400});
-  if(status==="published"&&images.length===0)return Response.json({error:"Añade al menos una imagen HTTPS antes de publicar."},{status:400});
   const categoryId=body.categoryId===null||body.categoryId===undefined||body.categoryId===""?null:body.categoryId;
   if(categoryId!==null&&!validString(categoryId,1,128))return Response.json({error:"Categoría inválida."},{status:400});
   const id=crypto.randomUUID();const slug=slugify(name)+"-"+id.slice(0,6);
