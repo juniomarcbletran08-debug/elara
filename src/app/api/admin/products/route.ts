@@ -34,6 +34,7 @@ export async function POST(request:Request){
   if(sale!==null&&(!Number.isSafeInteger(sale)||sale<0||sale>=price))return Response.json({error:"El precio promocional debe ser menor que el precio normal."},{status:400});
   const status=body.status===undefined?"draft":body.status;
   if(status!=="draft"&&status!=="published")return Response.json({error:"Estado de publicación inválido."},{status:400});
+  if(status==="published")return Response.json({error:"Crea primero el producto como borrador, añade una imagen y una variante activa con stock, y publícalo editándolo después."},{status:400});
   const images=validImages(body.images);
   if(!images)return Response.json({error:"Las imágenes deben ser URL HTTPS válidas (máximo 12)."},{status:400});
   if(status==="published"&&images.length===0)return Response.json({error:"Añade al menos una imagen HTTPS antes de publicar."},{status:400});
