@@ -8,6 +8,7 @@ export function SiteFooter() {
         <div><Link className="wordmark footer-wordmark" href="/">{STORE.name}</Link><p>Elegancia sin esfuerzo. Estilo con intención.</p></div>
         <div className="footer-links">
           <Link href="/catalogo">Colección</Link>
+          <Link href="/pedido/consultar">Consultar pedido</Link>
           <Link href="/preguntas-frecuentes">Preguntas frecuentes</Link>
           <Link href="/envios-y-devoluciones">Envíos y devoluciones</Link>
           <Link href="/politicas-de-privacidad">Privacidad</Link>
