@@ -72,3 +72,13 @@ button{cursor:pointer}
 @media(max-width:800px){.site-header{height:auto;min-height:0;padding:17px 5vw 12px;grid-template-columns:1fr auto;row-gap:13px}.wordmark{font-size:25px;letter-spacing:.2em}.main-nav{grid-column:1/-1;grid-row:2;justify-content:space-between;gap:16px;overflow-x:auto;padding:0 2px 5px;font-size:9px;white-space:nowrap}.bag-link{grid-column:2;grid-row:1}.hero{min-height:560px;padding:11vw 7vw}.section{padding:66px 6vw}.section-heading{display:block}.section-heading p{margin-top:16px}.collection-grid{grid-template-columns:1fr;gap:14px}.collection-card{min-height:370px}.benefits{grid-template-columns:1fr;padding:34px 8vw;gap:25px}.footer-top,.footer-bottom{flex-direction:column}.page-shell{padding:52px 5vw 76px}.product-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:22px 12px}.admin-area{padding:28px 16px 56px}.admin-nav{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none}.admin-nav::-webkit-scrollbar{display:none}.admin-nav a{white-space:nowrap;flex-shrink:0}.admin-panel{padding:20px}}
 @media(max-width:560px){.admin-product{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap}.admin-product-main{flex-basis:100%}.admin-product-media{flex-basis:62px;width:62px;height:80px}.admin-product .admin-actions{width:100%;margin-top:3px}.upload-preview-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}}
+
+
+.upload-dropzone{position:relative;overflow:hidden}
+.upload-dropzone input[type=file]{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;padding:0;border:0}
+.admin-field .upload-dropzone input[type=file]:focus{outline:2px solid var(--champagne);outline-offset:-5px;box-shadow:none}
+.admin-field .upload-dropzone input[type=file]:disabled{cursor:wait}
+.admin-top{margin-bottom:12px}
+.admin-toolbar select{margin-left:8px;border:1px solid #ded6ca;border-radius:999px;background:#fff;padding:10px 13px;color:#3e3933}
+.admin-product-media img{display:block}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
