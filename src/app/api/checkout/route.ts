@@ -23,6 +23,7 @@ export async function POST(request:Request){
  if(email&&!isEmail(email))return jsonError("El correo electrónico no es válido.",400);
  if(address.length>240||city.length>120||reference.length>500)return jsonError("Revisa los datos de entrega.",400);
  if(method!=="whatsapp"&&method!=="mercadopago")return jsonError("Método de pedido no válido.",400);
+ if(method==="mercadopago"&&(address.length<5||city.length<2))return jsonError("Para el pago online, completa dirección y ciudad para calcular la entrega.",400);
  let lines;
  try{lines=await quoteLines(body.items)}catch(e){return jsonError(e instanceof Error?e.message:"No se pudo validar el carrito.",409)}
  const siteUrl=(await getRuntimeValue("APP_URL"))||new URL(request.url).origin;
