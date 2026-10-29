@@ -104,7 +104,7 @@ class PostgresStatement implements D1Statement {
   }
 
   async run<T = Record<string, unknown>>(): Promise<D1Result<T>> {
-    return execute<T>(getSqlClient() as unknown as SqlExecutor, this.query());
+    return execute<T>(getSqlClient() as unknown as SqlExecutor, this.toQuery());
   }
 }
 
