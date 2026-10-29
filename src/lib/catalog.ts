@@ -566,7 +566,7 @@ const galleryImages = [
 export const products: Product[] = [
   ...featuredProducts,
   ...additionalProductDetails.map((item, index) => ({
-    id: item.name.toLocaleLowerCase("es").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
+    id: item.name.toLocaleLowerCase("es").normalize("NFD").replace(/[^a-zA-Z0-9]+/g, "-").replace(/^-|-$/g, ""),
     name: item.name,
     category: item.category,
     price: item.price,
