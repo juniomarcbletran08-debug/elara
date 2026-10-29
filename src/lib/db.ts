@@ -90,12 +90,12 @@ class PostgresStatement implements D1Statement {
     return this;
   }
 
-  private query(): { sql: string; values: SqlValue[] } {
+  toQuery(): { sql: string; values: SqlValue[] } {
     return { sql: normalizeSql(this.source), values: this.values };
   }
 
   async all<T = Record<string, unknown>>(): Promise<D1Result<T>> {
-    return execute<T>(getSqlClient() as unknown as SqlExecutor, this.query());
+    return execute<T>(getSqlClient() as unknown as SqlExecutor, this.toQuery());
   }
 
   async first<T = Record<string, unknown>>(): Promise<T | null> {
@@ -123,7 +123,7 @@ class PostgresDatabase implements D1Database {
         if (!(statement instanceof PostgresStatement)) {
           throw new Error("La transacción contiene una sentencia no compatible.");
         }
-        results.push(await execute<T>(executor, statement["query"]()));
+        results.push(await execute<T>(executor, statement.toQuery()));
       }
       return results;
     });
