@@ -571,7 +571,7 @@ export const products: Product[] = [
     category: item.category,
     price: item.price,
     ...(index % 5 === 0 ? { oldPrice: item.price + 30 } : {}),
-    ...(item.label ? { label: item.label } : {}),
+    ...("label" in item && item.label ? { label: item.label } : {}),
     image: galleryImages[index % galleryImages.length],
     imageAlt: item.name + " — fotografía de referencia para la demo",
     description: item.description,
