@@ -31,7 +31,7 @@ Configura `NEXT_PUBLIC_STORE_NAME`, `NEXT_PUBLIC_SITE_URL` y `APP_URL`. No añad
 2. Sustituye `REPLACE_WITH_D1_DATABASE_ID` en `wrangler.jsonc` por el ID real.
 3. Aplica el esquema con `npm run db:local` localmente o `npm run db:remote` para el entorno remoto correcto.
 4. Ejecuta `npm run cf:build` y valida `npm run cf:preview` antes de desplegar.
-5. Configura los secretos con Wrangler; consulta `.env.example`.
+5. Enlaza el bucket R2 `PRODUCT_IMAGES` y configura `PUBLIC_MEDIA_URL` con un dominio HTTPS público de Cloudflare R2 o tu dominio de medios. La aplicación valida extensión, MIME y firma de archivo al subir fotos.\n6. Configura los secretos con Wrangler; consulta `.env.example`. Usa `node scripts/hash-password.mjs` con `ADMIN_PASSWORD_TO_HASH` para generar el hash PBKDF2 de la contraseña administrativa. No guardes la contraseña ni el hash en Git.
 
 No ejecutes migraciones remotas hasta verificar el proyecto y la base de datos seleccionados.
 
