@@ -13,7 +13,7 @@ export async function POST(request:Request){
   const passwordHash=await getRuntimeValue("ADMIN_PASSWORD_HASH");const secret=await getRuntimeValue("ADMIN_SESSION_SECRET");
   if(!passwordHash||!secret||secret.length<32)return Response.json({error:"El administrador aún no está configurado."},{status:503});
   const ip=request.headers.get("cf-connecting-ip")||"local";const ipHash=await hashLoginIp(ip);const db=await getDb();
-  const count=await db.prepare("SELECT COUNT(*) AS attempts FROM admin_login_attempts WHERE ip_hash=? AND attempted_at > datetime('now','-15 minutes')").bind(ipHash).first<{attempts:number}>();
+  const count=await db.prepare("SELECT COUNT(*) AS attempts FROM admin_login_attempts WHERE ip_hash=? AND attempted_at > NOW() - INTERVAL '15 minutes'").bind(ipHash).first<{attempts:number}>();
   if(Number(count?.attempts||0)>=8)return Response.json({error:"Demasiados intentos. Prueba de nuevo en 15 minutos."},{status:429});
   await db.prepare("INSERT INTO admin_login_attempts(id,ip_hash) VALUES(?,?)").bind(crypto.randomUUID(),ipHash).run();
   if(!(await verifyAdminPassword(password,passwordHash)))return Response.json({error:"Credenciales inválidas."},{status:401});
