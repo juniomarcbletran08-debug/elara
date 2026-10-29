@@ -19,7 +19,7 @@ export async function hashLoginIp(ip:string):Promise<string>{const secret=await 
 export function requestIdentity(request:Request):string{return request.headers.get("cf-connecting-ip")||request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()||"unknown-client";}
 export async function consumeRateLimit(bucket:string,identity:string,limit:number,windowSeconds:number):Promise<boolean>{
  const {getDb}=await import("@/lib/db");const db=await getDb();const secret=await getRuntimeValue("ADMIN_SESSION_SECRET")||"elara-unconfigured-rate-limit";const keyHash=await sha256(secret+":"+bucket+":"+identity);const windowStart=Math.floor(Date.now()/1000/windowSeconds)*windowSeconds;
- await db.prepare("INSERT INTO rate_limits(bucket,key_hash,window_start,count) VALUES(?,?,?,1) ON CONFLICT(bucket,key_hash,window_start) DO UPDATE SET count=count+1").bind(bucket,keyHash,windowStart).run();
+ await db.prepare("INSERT INTO rate_limits AS current_limit(bucket,key_hash,window_start,count) VALUES(?,?,?,1) ON CONFLICT(bucket,key_hash,window_start) DO UPDATE SET count=current_limit.count+1").bind(bucket,keyHash,windowStart).run();
  const row=await db.prepare("SELECT count FROM rate_limits WHERE bucket=? AND key_hash=? AND window_start=?").bind(bucket,keyHash,windowStart).first<{count:number}>();
  return Number(row?.count??limit+1)<=limit;
 }

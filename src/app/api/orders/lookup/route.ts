@@ -12,7 +12,7 @@ export async function POST(request:Request){
  try{
   const db=await getDb();const order=await db.prepare("SELECT id,order_number,access_code_hash,status,payment_status,currency,subtotal_cents,shipping_cents,total_cents,channel,created_at,updated_at FROM orders WHERE order_number=? LIMIT 1").bind(orderNumber).first<Record<string,unknown>>();
   if(!order||typeof order.access_code_hash!=="string"||!await secureTextEqual(await sha256(code),order.access_code_hash))return jsonError("No encontramos un pedido con esos datos.",404);
-  const items=await db.prepare("SELECT product_name,variant_label,quantity,unit_price_cents,line_total_cents FROM order_items WHERE order_id=? ORDER BY rowid").bind(order.id as string).all<Record<string,unknown>>();
+  const items=await db.prepare("SELECT product_name,variant_label,quantity,unit_price_cents,line_total_cents FROM order_items WHERE order_id=? ORDER BY id").bind(order.id as string).all<Record<string,unknown>>();
   return jsonOk({order:{orderNumber:order.order_number,status:order.status,paymentStatus:order.payment_status,currency:order.currency,subtotalCents:order.subtotal_cents,shippingCents:order.shipping_cents,totalCents:order.total_cents,channel:order.channel,createdAt:order.created_at,updatedAt:order.updated_at,items:items.results.map(i=>({name:i.product_name,variant:i.variant_label,quantity:i.quantity,unitPriceCents:i.unit_price_cents,lineTotalCents:i.line_total_cents}))}});
  }catch{return jsonError("No se pudo consultar el pedido.",503)}
 }

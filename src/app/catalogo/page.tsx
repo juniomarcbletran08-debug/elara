@@ -1,19 +1,18 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getDb } from "@/lib/db";
+import { listPublishedProducts, type PublicProduct } from "@/lib/supabase-public";
 import { formatPEN } from "@/lib/format";
 
 export const metadata: Metadata = { title: "Colección" };
 export const dynamic = "force-dynamic";
-type Product = { id:string; name:string; slug:string; description:string; price_cents:number; sale_price_cents:number|null; images_json:string };
-async function getProducts(category?:string): Promise<Product[]> {
+type Product = Pick<PublicProduct,"id"|"name"|"slug"|"description"|"price_cents"|"sale_price_cents"|"images_json">;
+
+async function getProducts(category?: string): Promise<Product[]> {
   try {
-    const db = await getDb();
-    const statement = category
-      ? db.prepare("SELECT p.id,p.name,p.slug,p.description,p.price_cents,p.sale_price_cents,p.images_json FROM products p JOIN categories c ON c.id=p.category_id WHERE p.status='published' AND c.slug=? ORDER BY p.created_at DESC LIMIT 100").bind(category)
-      : db.prepare("SELECT id,name,slug,description,price_cents,sale_price_cents,images_json FROM products WHERE status='published' ORDER BY created_at DESC LIMIT 100");
-    return (await statement.all<Product>()).results;
-  } catch { return []; }
+    return await listPublishedProducts(category);
+  } catch {
+    return [];
+  }
 }
 function imageOf(raw:string):string {
   try { const v:unknown=JSON.parse(raw); if(Array.isArray(v)&&typeof v[0]==="string"&&/^https:\/\//.test(v[0]))return v[0]; } catch {}

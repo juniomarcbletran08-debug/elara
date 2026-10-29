@@ -1,19 +1,19 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getDb } from "@/lib/db";
+import { getPublishedProduct, listActiveVariants, type PublicProduct, type PublicVariant } from "@/lib/supabase-public";
 import { formatPEN } from "@/lib/format";
 import { AddToCart } from "@/components/add-to-cart";
 
 export const metadata: Metadata = { title: "Producto" };
 export const dynamic = "force-dynamic";
-type Product = { id:string; name:string; slug:string; description:string; price_cents:number; sale_price_cents:number|null; images_json:string; sku:string };
-type Variant = {id:string;size:string;color:string;sku:string;stock_on_hand:number;stock_reserved:number;active:number};
+type Product = PublicProduct;
+type Variant = PublicVariant;
+
 async function loadProduct(slug:string):Promise<{product:Product;variants:Variant[]}|null>{
   try{
-    const db=await getDb();
-    const product=await db.prepare("SELECT id,name,slug,description,price_cents,sale_price_cents,images_json,sku FROM products WHERE slug=? AND status='published' LIMIT 1").bind(slug).first<Product>();
+    const product=await getPublishedProduct(slug);
     if(!product)return null;
-    const variants=(await db.prepare("SELECT id,size,color,sku,stock_on_hand,stock_reserved,active FROM product_variants WHERE product_id=? ORDER BY size,color").bind(product.id).all<Variant>()).results;
+    const variants=await listActiveVariants(product.id);
     return {product,variants};
   }catch{return null}
 }

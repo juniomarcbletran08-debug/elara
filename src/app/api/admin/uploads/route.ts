@@ -22,13 +22,13 @@ export async function POST(request:Request){
  const buffer=await entry.arrayBuffer();const detected=detectImage(new Uint8Array(buffer));
  if(!detected||entry.type!==detected.mime)return jsonError("Formato de imagen no admitido o contenido que no coincide con su tipo. Usa JPEG, PNG, WEBP o AVIF.",415);
  const mediaBase=await getRuntimeValue("PUBLIC_MEDIA_URL");
- if(!mediaBase)return jsonError("Configura PUBLIC_MEDIA_URL después de enlazar el bucket público de imágenes.",503);
+ if(!mediaBase)return jsonError("Configura PUBLIC_MEDIA_URL después de crear el bucket público de Supabase Storage.",503);
  let base:URL;try{base=new URL(mediaBase)}catch{return jsonError("PUBLIC_MEDIA_URL debe ser una URL HTTPS válida.",503)}
  if(base.protocol!=="https:"||base.username||base.password||base.search||base.hash)return jsonError("PUBLIC_MEDIA_URL debe ser HTTPS y no incluir credenciales ni parámetros.",503);
  try{
-  const env=await getEnv();if(!env.PRODUCT_IMAGES)return jsonError("Falta el binding R2 PRODUCT_IMAGES.",503);
+  const env=await getEnv();if(!env.PRODUCT_IMAGES)return jsonError("Configura SUPABASE_SECRET_KEY y el bucket Supabase Storage.",503);
   const key="products/"+new Date().toISOString().slice(0,7)+"/"+crypto.randomUUID()+"."+detected.extension;
   await env.PRODUCT_IMAGES.put(key,buffer,{httpMetadata:{contentType:detected.mime,cacheControl:"public, max-age=31536000, immutable"}});
   return jsonOk({url:base.toString().replace(/\/$/,"")+"/"+key,key,contentType:detected.mime,size:entry.size},201);
- }catch{return jsonError("No se pudo subir la imagen al almacenamiento. Revisa el binding R2.",503)}
+ }catch{return jsonError("No se pudo subir la imagen al almacenamiento. Revisa SUPABASE_SECRET_KEY y la configuración del bucket de Supabase Storage.",503)}
 }
