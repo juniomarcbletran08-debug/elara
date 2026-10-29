@@ -131,3 +131,7 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--champagne);outline-
 .category-link small{display:block;color:var(--stone);margin-top:6px;line-height:1.6}
 @media(max-width:800px){.product-detail,.cart-layout,.checkout-layout{grid-template-columns:1fr}.product-detail{gap:32px}.product-detail-copy{padding-top:0}.cart-summary{position:static}.checkout-fields{gap:13px}}
 @media(max-width:560px){.cart-item{grid-template-columns:86px minmax(0,1fr);gap:13px}.cart-line-total{grid-column:2;margin-top:-5px}.checkout-fields{grid-template-columns:1fr}.checkout-full{grid-column:auto}.product-thumbs{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+.order-lookup-form{max-width:540px;display:grid;gap:18px}.order-lookup-form input{font:inherit;padding:13px;background:transparent;border:1px solid var(--line)}.order-lookup-form>.button{justify-self:start;cursor:pointer}
+.order-result{max-width:780px;margin-top:35px;padding:26px;background:#eee8df}.order-result h2{font-family:Georgia,'Times New Roman',serif;font-size:29px;font-weight:400;margin:0 0 10px}.order-status-note{color:var(--stone);font-size:12px;line-height:1.8;margin:0 0 18px}
+.admin-order{display:block}.admin-order-top{display:flex;justify-content:space-between;align-items:center;gap:12px}.admin-order-top time{color:#77736d;font-size:10px}.admin-order h3{margin-top:13px}.admin-order-lines{border-top:1px solid #e1dbd1;margin-top:14px;padding-top:10px}
