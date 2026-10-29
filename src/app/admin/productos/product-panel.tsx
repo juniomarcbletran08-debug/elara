@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import { AdminVariants } from "@/components/admin-variants";
 
 type Product={id:string;name:string;slug:string;description:string;category_id:string|null;price_cents:number;sale_price_cents:number|null;sku:string;status:"draft"|"published"|"archived";images_json:string};
 const empty={name:"",description:"",sku:"",price:"",salePrice:"",categoryId:"",images:"",status:"draft"};
@@ -11,6 +12,7 @@ export function ProductPanel(){
   const [products,setProducts]=useState<Product[]>([]);
   const [form,setForm]=useState(empty);
   const [editing,setEditing]=useState<string|null>(null);
+  const [variantProduct,setVariantProduct]=useState<{id:string;name:string}|null>(null);
   const [error,setError]=useState("");
   const [notice,setNotice]=useState("");
   const [loading,setLoading]=useState(true);
@@ -33,7 +35,7 @@ export function ProductPanel(){
       setNotice(editing?"Producto actualizado.":"Producto creado.");reset();await load();
     }catch(e){setError(e instanceof Error?e.message:"Error de red.");}
   }
-  async function remove(p:Product){if(!window.confirm("¿Eliminar definitivamente “"+p.name+"”?"))return;setError("");setNotice("");try{const res=await fetch("/api/admin/products/"+encodeURIComponent(p.id),{method:"DELETE"});const data=await res.json().catch(()=>({}));if(res.status===401){router.replace("/admin/login");return;}if(!res.ok)throw new Error(data.error||"No se pudo eliminar.");setProducts(old=>old.filter(v=>v.id!==p.id));setNotice("Producto eliminado.");if(editing===p.id)reset();}catch(e){setError(e instanceof Error?e.message:"Error de red.");}}
+  async function remove(p:Product){if(!window.confirm("¿Archivar o eliminar de catálogo “"+p.name+"”?"))return;setError("");setNotice("");try{const res=await fetch("/api/admin/products/"+encodeURIComponent(p.id),{method:"DELETE"});const data=await res.json().catch(()=>({}));if(res.status===401){router.replace("/admin/login");return;}if(!res.ok)throw new Error(data.error||"No se pudo eliminar.");setProducts(old=>old.filter(v=>v.id!==p.id));setNotice("Producto eliminado del catálogo.");if(editing===p.id)reset();}catch(e){setError(e instanceof Error?e.message:"Error de red.");}}
   async function logout(){await fetch("/api/admin/session",{method:"DELETE"}).catch(()=>undefined);router.replace("/admin/login");router.refresh();}
   return <>
     <div className="admin-actions"><button className="button" type="button" onClick={logout}>Cerrar sesión</button><button className="button" type="button" onClick={()=>{reset();window.scrollTo({top:0,behavior:"smooth"});}}>Nuevo producto +</button></div>
@@ -51,6 +53,7 @@ export function ProductPanel(){
       {notice&&<p className="admin-success admin-full" role="status">{notice}</p>}
       <div className="admin-actions admin-full"><button className="button" type="submit">{editing?"Guardar cambios":"Crear producto"}</button>{editing&&<button className="button" type="button" onClick={reset}>Cancelar edición</button>}</div>
     </form>
-    <section className="admin-panel"><h2 className="admin-title" style={{fontSize:30}}>Catálogo</h2>{loading?<p className="admin-muted">Cargando productos…</p>:products.length===0?<p className="admin-muted">Aún no hay productos. Crea uno y déjalo en borrador hasta completar los datos reales.</p>:<div className="admin-products">{products.map(p=><article className="admin-product" key={p.id}><div><span className="admin-tag">{p.status}</span><h3>{p.name}</h3><p>SKU: {p.sku} · {money(p.sale_price_cents??p.price_cents)}</p><p>{p.slug}</p></div><div className="admin-actions"><button className="button" type="button" onClick={()=>edit(p)}>Editar</button><button className="button" type="button" onClick={()=>void remove(p)}>Eliminar</button></div></article>)}</div>}</section>
+    {variantProduct&&<AdminVariants productId={variantProduct.id} productName={variantProduct.name} onClose={()=>setVariantProduct(null)}/>}
+    <section className="admin-panel"><h2 className="admin-title" style={{fontSize:30}}>Catálogo</h2>{loading?<p className="admin-muted">Cargando productos…</p>:products.length===0?<p className="admin-muted">Aún no hay productos. Crea uno en borrador, registra sus variantes y publica cuando tenga fotos reales y stock válido.</p>:<div className="admin-products">{products.map(p=><article className="admin-product" key={p.id}><div><span className="admin-tag">{p.status}</span><h3>{p.name}</h3><p>SKU: {p.sku} · {money(p.sale_price_cents??p.price_cents)}</p><p>{p.slug}</p></div><div className="admin-actions"><button className="button" type="button" onClick={()=>edit(p)}>Editar</button><button className="button" type="button" onClick={()=>setVariantProduct({id:p.id,name:p.name})}>Inventario</button><button className="button" type="button" onClick={()=>void remove(p)}>Eliminar</button></div></article>)}</div>}</section>
   </>;
 }
