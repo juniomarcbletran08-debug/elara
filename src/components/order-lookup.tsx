@@ -2,7 +2,7 @@
 import {useState,type FormEvent} from "react";
 import {formatPEN} from "@/lib/format";
 type Order={orderNumber:string;status:string;paymentStatus:string;currency:string;subtotalCents:number;shippingCents:number;totalCents:number;channel:string;createdAt:string;items:{name:string;variant:string;quantity:number;unitPriceCents:number;lineTotalCents:number}[]};
-const states:Record<string,string>={pending_confirmation:"Pendiente de confirmación",pending_payment:"Pendiente de pago",paid:"Pagado",payment_rejected:"Pago rechazado",payment_setup_failed:"Pago no iniciado",cancelled:"Cancelado",fulfilled:"Completado",needs_review:"En revisión"};
+const states:Record<string,string>={pending_confirmation:"Pendiente de confirmación",confirmed:"Solicitud confirmada",pending_payment:"Pendiente de pago",paid:"Pagado",payment_rejected:"Pago rechazado",payment_setup_failed:"Pago no iniciado",cancelled:"Cancelado",fulfilled:"Completado",needs_review:"En revisión"};
 export function OrderLookup(){
  const [orderNumber,setOrderNumber]=useState("");const [accessCode,setAccessCode]=useState("");const [order,setOrder]=useState<Order|null>(null);const [error,setError]=useState("");const [loading,setLoading]=useState(false);
  async function submit(e:FormEvent<HTMLFormElement>){e.preventDefault();setError("");setOrder(null);setLoading(true);try{const r=await fetch("/api/orders/lookup",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({orderNumber,accessCode}),cache:"no-store"});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||"No se pudo consultar.");setOrder(d.order as Order)}catch(e){setError(e instanceof Error?e.message:"No se pudo conectar con el servidor.")}finally{setLoading(false)}}
