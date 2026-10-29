@@ -116,6 +116,7 @@ export default function HomePage() {
           <div><p className="eyebrow">DESCUBRE TU PRÓXIMO FAVORITO</p><h2>La colección <em>ÉLARA</em></h2></div>
           <p className="section-intro">Un guardarropa con intención.<br />Detalles que hablan de ti.</p>
         </div>
+        <p className="catalog-disclaimer">Catálogo de demostración · precios y disponibilidad por confirmar</p>
         <div className="collection-toolbar">
           <div className="category-tabs" role="group" aria-label="Filtrar por categoría">
             {categories.map((item) => <button key={item} className={category === item ? "category-tab active" : "category-tab"} onClick={() => setCategory(item)}>{item}</button>)}
