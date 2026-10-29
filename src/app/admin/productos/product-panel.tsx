@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { AdminVariants } from "@/components/admin-variants";
 
@@ -34,6 +34,8 @@ export function ProductPanel(){
   const [notice,setNotice]=useState("");
   const [loading,setLoading]=useState(true);
   const [uploading,setUploading]=useState(false);
+  const [search,setSearch]=useState("");
+  const [statusFilter,setStatusFilter]=useState("all");
   const [selectedFileNames,setSelectedFileNames]=useState<string[]>([]);
   const filePicker = useRef<HTMLInputElement>(null);
   async function load(){setLoading(true);try{const res=await fetch("/api/admin/products",{cache:"no-store"});if(res.status===401){router.replace("/admin/login");return;}const data=await res.json();if(!res.ok)throw new Error(data.error||"No se pudo cargar el catálogo.");setProducts(data.products||[]);const catRes=await fetch("/api/admin/categories",{cache:"no-store"});if(catRes.status===401){router.replace("/admin/login");return;}if(catRes.ok){const cats=await catRes.json();setCategories(cats.categories||[]);}}catch(e){setError(e instanceof Error?e.message:"Error de red.");}finally{setLoading(false);}}
@@ -41,6 +43,7 @@ export function ProductPanel(){
   function change(field:keyof typeof empty,value:string){setForm(old=>({...old,[field]:value}));}
   function reset(){setEditing(null);setForm(empty);setError("");setSelectedFileNames([]);}
   function edit(p:Product){const imgs=imageList(p.images_json);setEditing(p.id);setForm({name:p.name,description:p.description,sku:p.sku,price:(p.price_cents/100).toFixed(2),salePrice:p.sale_price_cents===null?"":(p.sale_price_cents/100).toFixed(2),categoryId:p.category_id||"",images:imgs.join("\n"),status:p.status});setError("");setNotice("");window.scrollTo({top:0,behavior:"smooth"});}
+  const filteredProducts=useMemo(()=>products.filter(p=>{const q=search.trim().toLocaleLowerCase("es");const matchesText=!q||[p.name,p.sku,p.slug].some(value=>value.toLocaleLowerCase("es").includes(q));return matchesText&&(statusFilter==="all"||p.status===statusFilter);}),[products,search,statusFilter]);
   async function uploadFiles(fileList:FileList|null){
     if(!fileList||fileList.length===0)return;
     const selectedFiles=Array.from(fileList);
@@ -89,12 +92,32 @@ export function ProductPanel(){
       <div className="admin-field"><label htmlFor="status">Publicación</label><select id="status" value={form.status} onChange={e=>change("status",e.target.value)}><option value="draft">Borrador</option><option value="published" disabled={!editing}>Publicado (configura variantes primero)</option>{editing&&<option value="archived">Archivado</option>}</select></div>
       <div className="admin-field admin-full"><label htmlFor="description">Descripción</label><textarea id="description" value={form.description} onChange={e=>change("description",e.target.value)} maxLength={5000}/></div>
       <div className="admin-field admin-full"><label htmlFor="images">Fotos del producto (enlaces de imagen)</label><textarea id="images" value={form.images} onChange={e=>change("images",e.target.value)} placeholder="Al elegir fotos de tu computadora, los enlaces aparecerán aquí."/></div>
-      <div className="admin-field admin-full"><label htmlFor="image-files">Fotos desde tu computadora</label><input ref={filePicker} id="image-files" type="file" accept="image/jpeg,image/png,image/webp,image/avif" multiple disabled={uploading} style={{position:"absolute",width:1,height:1,padding:0,margin:-1,overflow:"hidden",clip:"rect(0, 0, 0, 0)",whiteSpace:"nowrap",border:0}} onChange={e=>{const input=e.currentTarget;const files=input.files;setSelectedFileNames(files?Array.from(files).map(file=>file.name):[]);void uploadFiles(files);input.value="";}}/><button className="button" type="button" onClick={()=>filePicker.current?.click()} disabled={uploading}>{uploading?"Subiendo fotos…":"Elegir fotos de mi computadora"}</button><p className="admin-muted">{uploading?"Subiendo las fotos elegidas…":"Pulsa el botón para abrir los archivos de tu computadora. Selecciona una o varias fotos; se subirán automáticamente. Después pulsa Crear producto para guardar el producto y sus fotos."}</p>{selectedFileNames.length>0&&<p className="admin-muted">Archivos seleccionados: {selectedFileNames.join(", ")}</p>}</div>
+      <div className="admin-field admin-full">
+        <label htmlFor="image-files">FOTOGRAFÍAS DEL PRODUCTO</label>
+        <div className="upload-dropzone">
+          <span className="upload-dropzone-icon" aria-hidden="true">↑</span>
+          <strong>{uploading?"Subiendo tus fotografías…":"Añade imágenes a tu colección"}</strong>
+          <small>Selecciona uno o varios archivos · JPEG, PNG, WebP o AVIF · máximo 8 MB por imagen</small>
+          <button className="button" type="button" onClick={()=>filePicker.current?.click()} disabled={uploading}>{uploading?"Subiendo fotos…":"Elegir fotos de mi computadora"}</button>
+          <input ref={filePicker} id="image-files" type="file" accept="image/jpeg,image/png,image/webp,image/avif" multiple disabled={uploading} style={{position:"absolute",width:1,height:1,padding:0,margin:-1,overflow:"hidden",clip:"rect(0, 0, 0, 0)",whiteSpace:"nowrap",border:0}} onChange={e=>{const input=e.currentTarget;const files=input.files;setSelectedFileNames(files?Array.from(files).map(file=>file.name):[]);void uploadFiles(files);input.value="";}}/>
+        </div>
+        <p className="admin-muted">{uploading?"La carga está en curso; no cierres esta pantalla.":"Las imágenes se guardan en Supabase Storage. Después, guarda el producto para asociarlas."}</p>
+        {selectedFileNames.length>0&&<p className="admin-muted">Archivos seleccionados: {selectedFileNames.join(", ")}</p>}
+        {form.images.trim()&&<div className="upload-preview-grid">{form.images.split(/\r?\n|,/).map(v=>v.trim()).filter(v=>/^https:\/\//i.test(v)).map((url,i)=><figure className="upload-preview" key={url+i}><img src={url} alt={"Vista previa del producto "+(i+1)} loading="lazy"/><figcaption>Imagen {i+1} · lista para guardar</figcaption></figure>)}</div>}
+      </div>
       {error&&<p className="admin-error admin-full" role="alert">{error}</p>}
       {notice&&<p className="admin-success admin-full" role="status">{notice}</p>}
       <div className="admin-actions admin-full"><button className="button" type="submit">{editing?"Guardar cambios":"Crear producto"}</button>{editing&&<button className="button" type="button" onClick={reset}>Cancelar edición</button>}</div>
     </form>
     {variantProduct&&<AdminVariants productId={variantProduct.id} productName={variantProduct.name} onClose={()=>setVariantProduct(null)}/>}
-    <section className="admin-panel"><h2 className="admin-title" style={{fontSize:30}}>Catálogo</h2>{loading?<p className="admin-muted">Cargando productos…</p>:products.length===0?<p className="admin-muted">Aún no hay productos. Crea uno en borrador, registra sus variantes y publica cuando tenga fotos reales y stock válido.</p>:<div className="admin-products">{products.map(p=><article className="admin-product" key={p.id}><div><span className="admin-tag">{p.status}</span><h3>{p.name}</h3><p>SKU: {p.sku} · {money(p.sale_price_cents??p.price_cents)}</p><p>{p.slug}</p></div><div className="admin-actions"><button className="button" type="button" onClick={()=>edit(p)}>Editar</button><button className="button" type="button" onClick={()=>setVariantProduct({id:p.id,name:p.name})}>Inventario</button><button className="button" type="button" onClick={()=>void remove(p)}>Eliminar</button></div></article>)}</div>}</section>
+    <section className="admin-panel">
+      <div className="admin-top"><p className="admin-muted">TU SELECCIÓN</p><h2 className="admin-title" style={{fontSize:30}}>Catálogo</h2><p className="admin-muted">Gestiona tus piezas, fotografías y estados desde un solo lugar.</p></div>
+      <div className="admin-toolbar">
+        <label className="admin-search"><span className="sr-only">Buscar productos</span><input type="search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Buscar por nombre, SKU o referencia…"/></label>
+        <label className="admin-muted">Estado <select value={statusFilter} onChange={e=>setStatusFilter(e.target.value)} aria-label="Filtrar por estado"><option value="all">Todos</option><option value="published">Publicados</option><option value="draft">Borradores</option><option value="archived">Archivados</option></select></label>
+      </div>
+      {loading?<p className="admin-muted">Cargando productos…</p>:products.length===0?<div className="empty-state"><h2>Aún no hay piezas en tu catálogo</h2><p>Crea el primer producto, añade sus fotografías y configura las variantes antes de publicarlo.</p></div>:filteredProducts.length===0?<div className="empty-state"><h2>No encontramos coincidencias</h2><p>Prueba con otro nombre, SKU o estado.</p><button className="button" type="button" onClick={()=>{setSearch("");setStatusFilter("all");}}>Limpiar filtros</button></div>:<div className="admin-products">{filteredProducts.map(p=>{const image=imageList(p.images_json)[0];return <article className="admin-product" key={p.id}><div className="admin-product-main"><div className="admin-product-media">{image?<img src={image} alt={p.name} loading="lazy"/>:<span>ÉLARA</span>}</div><div className="admin-product-copy"><span className="admin-tag">{p.status==="published"?"Publicado":p.status==="archived"?"Archivado":"Borrador"}</span><h3>{p.name}</h3><p>SKU: {p.sku} · {money(p.sale_price_cents??p.price_cents)}</p><p>{p.slug}</p></div></div><div className="admin-actions"><button className="button" type="button" onClick={()=>edit(p)}>Editar</button><button className="button" type="button" onClick={()=>setVariantProduct({id:p.id,name:p.name})}>Inventario</button><button className="button" type="button" onClick={()=>void remove(p)}>Archivar / eliminar</button></div></article>})}</div>}
+      <p className="admin-muted" style={{marginTop:20}}>{filteredProducts.length} de {products.length} productos</p>
+    </section>
   </>;
 }
