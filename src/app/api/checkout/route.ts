@@ -57,7 +57,7 @@ export async function POST(request:Request){
    back_urls:{success:baseUrl+"/checkout/resultado?status=success",failure:baseUrl+"/checkout/resultado?status=failure",pending:baseUrl+"/checkout/resultado?status=pending"},
    auto_return:baseUrl.startsWith("https://")?"approved":undefined,
    payer:{name:customerName,email:email||undefined},
-   statement_descriptor:STORE.name.replace(/[^A-Za-z0-9 ]/g,"").slice(0,13)||"ELARA",
+   statement_descriptor:STORE.paymentDescriptor,
    metadata:{order_number:order.orderNumber,environment:mode},
   };
   const response=await fetch("https://api.mercadopago.com/checkout/preferences",{method:"POST",headers:{"Authorization":"Bearer "+token,"Content-Type":"application/json","X-Idempotency-Key":"elara-pref-"+order.id},body:JSON.stringify(preference),signal:AbortSignal.timeout(12000)});
