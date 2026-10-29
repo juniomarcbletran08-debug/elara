@@ -7,6 +7,21 @@ type Product={id:string;name:string;slug:string;description:string;category_id:s
 const empty={name:"",description:"",sku:"",price:"",salePrice:"",categoryId:"",images:"",status:"draft"};
 function money(cents:number){return new Intl.NumberFormat("es-PE",{style:"currency",currency:"PEN"}).format(cents/100)}
 function imageList(raw:string){try{const v:unknown=JSON.parse(raw);return Array.isArray(v)?v.filter((x):x is string=>typeof x==="string"):[]}catch{return[]}}
+async function optimizeImage(file:File):Promise<File>{
+  try{
+    const bitmap=await createImageBitmap(file);
+    const scale=Math.min(1,2200/Math.max(bitmap.width,bitmap.height));
+    const canvas=document.createElement("canvas");
+    canvas.width=Math.max(1,Math.round(bitmap.width*scale));canvas.height=Math.max(1,Math.round(bitmap.height*scale));
+    const ctx=canvas.getContext("2d");
+    if(!ctx){bitmap.close();return file;}
+    ctx.drawImage(bitmap,0,0,canvas.width,canvas.height);bitmap.close();
+    const blob=await new Promise<Blob|null>(resolve=>canvas.toBlob(resolve,"image/webp",0.82));
+    if(!blob||blob.size>=file.size)return file;
+    const base=file.name.replace(/\.[^.]+$/,"")||"producto";
+    return new File([blob],base+".webp",{type:"image/webp",lastModified:Date.now()});
+  }catch{return file;}
+}
 export function ProductPanel(){
   const router=useRouter();
   const [products,setProducts]=useState<Product[]>([]);
@@ -24,10 +39,12 @@ export function ProductPanel(){
   function edit(p:Product){const imgs=imageList(p.images_json);setEditing(p.id);setForm({name:p.name,description:p.description,sku:p.sku,price:(p.price_cents/100).toFixed(2),salePrice:p.sale_price_cents===null?"":(p.sale_price_cents/100).toFixed(2),categoryId:p.category_id||"",images:imgs.join("\n"),status:p.status});setError("");setNotice("");window.scrollTo({top:0,behavior:"smooth"});}
   async function uploadFiles(fileList:FileList|null){
     if(!fileList||fileList.length===0)return;
+    const selectedFiles=Array.from(fileList);
     setError("");setNotice("");setUploading(true);
     const urls:string[]=[];
     try{
-      for(const file of Array.from(fileList)){
+      for(const original of selectedFiles){
+        const file=await optimizeImage(original);
         const formData=new FormData();formData.append("file",file);
         const response=await fetch("/api/admin/uploads",{method:"POST",body:formData,cache:"no-store"});
         const data=await response.json().catch(()=>({}));
