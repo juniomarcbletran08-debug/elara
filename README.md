@@ -16,19 +16,34 @@ Incluye:
 
 Los nombres, precios, disponibilidad y fotografías son ilustrativos; no representan inventario real. El botón de pago solo informa que los cobros no están habilitados. No se reciben pedidos ni se procesa dinero.
 
-## Requisitos
+## Publicar en Cloudflare Pages con un ZIP
 
-- Node.js 22
-- npm
+El proyecto está configurado para generar un sitio estático en la carpeta `out/`, compatible con **Cloudflare Pages Direct Upload**. No subas el ZIP del código fuente: debes subir el ZIP de los archivos generados.
 
-## Ejecutar localmente
+### Obtener el ZIP sin compilar en tu equipo
+
+1. Abre la pestaña **Actions** del repositorio en GitHub.
+2. Entra en la ejecución más reciente del flujo **CI** de la rama `main` y espera a que todas las verificaciones terminen correctamente.
+3. En **Artifacts**, descarga `elara-cloudflare-pages`.
+4. Extrae el artefacto descargado si GitHub te entrega un ZIP exterior. Dentro estará `elara-cloudflare-pages.zip`, que contiene el sitio listo para subir.
+5. En Cloudflare Dashboard, abre **Workers & Pages**, crea o selecciona un proyecto de Pages con **Direct Upload**, y carga `elara-cloudflare-pages.zip`.
+
+Cloudflare no quedará conectado automáticamente a GitHub con este método: después de cada cambio tendrás que descargar el artefacto nuevo y volver a subirlo. El proyecto no necesita variables de entorno.
+
+### Generación local alternativa
+
+Requisitos: Node.js 22 y npm.
 
 ```bash
 npm install
-npm run dev
+npm run typecheck
+npm test
+npm run build
+cd out
+zip -r ../elara-cloudflare-pages.zip .
 ```
 
-Abre `http://localhost:3000`.
+Después, carga `elara-cloudflare-pages.zip` en Cloudflare Pages Direct Upload.
 
 ## Verificaciones
 
@@ -37,5 +52,3 @@ npm run typecheck
 npm test
 npm run build
 ```
-
-No se requieren variables de entorno ni credenciales para ejecutar esta demo.
