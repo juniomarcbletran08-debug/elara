@@ -17,8 +17,11 @@ export async function PATCH(request:Request){
   if(!order)return Response.json({error:"Pedido no encontrado."},{status:404});
   if(status==="fulfilled"&&order.payment_status!=="approved")return Response.json({error:"Solo puedes completar un pedido con pago aprobado."},{status:409});
   if(status==="cancelled"&&order.payment_status==="approved")return Response.json({error:"Un pedido pagado requiere el proceso de devolución correspondiente; no se cancela desde este panel."},{status:409});
-  if(status==="cancelled"&&order.payment_status==="pending"&&order.channel==="mercadopago"){
-   await db.batch([db.prepare("UPDATE product_variants SET stock_reserved=MAX(0,stock_reserved-(SELECT COALESCE(SUM(oi.quantity),0) FROM order_items oi WHERE oi.order_id=? AND oi.variant_id=product_variants.id)) WHERE id IN (SELECT variant_id FROM order_items WHERE order_id=? AND variant_id IS NOT NULL) AND EXISTS(SELECT 1 FROM orders WHERE id=? AND payment_status='pending')").bind(id,id,id),db.prepare("UPDATE orders SET status='cancelled',payment_status='cancelled',updated_at=CURRENT_TIMESTAMP WHERE id=? AND payment_status='pending'").bind(id)]);
+  if(status==="cancelled"&&order.payment_status==="pending"){
+   const statements=[];
+   if(order.channel==="mercadopago")statements.push(db.prepare("UPDATE product_variants SET stock_reserved=MAX(0,stock_reserved-(SELECT COALESCE(SUM(oi.quantity),0) FROM order_items oi WHERE oi.order_id=? AND oi.variant_id=product_variants.id)) WHERE id IN (SELECT variant_id FROM order_items WHERE order_id=? AND variant_id IS NOT NULL) AND EXISTS(SELECT 1 FROM orders WHERE id=? AND payment_status='pending')").bind(id,id,id));
+   statements.push(db.prepare("UPDATE orders SET status='cancelled',payment_status='cancelled',updated_at=CURRENT_TIMESTAMP WHERE id=? AND payment_status='pending'").bind(id));
+   await db.batch(statements);
   }else{
    const result=await db.prepare("UPDATE orders SET status=?,updated_at=CURRENT_TIMESTAMP WHERE id=? AND payment_status=?").bind(status,id,order.payment_status).run();
    if(!result.meta?.changes)return Response.json({error:"El estado del pedido cambió; recarga y vuelve a intentarlo."},{status:409});
