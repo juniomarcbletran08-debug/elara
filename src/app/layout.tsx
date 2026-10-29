@@ -4,6 +4,7 @@ import { STORE } from "@/lib/config";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { WhatsappFab } from "@/components/whatsapp-fab";
+import { CartProvider } from "@/components/cart-provider";
 
 export const metadata: Metadata = {
   title: { default: `${STORE.name} — ${STORE.descriptor}`, template: `%s | ${STORE.name}` },
@@ -14,12 +15,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="es-PE">
-      <body>
-        <SiteHeader />
-        <main>{children}</main>
-        <SiteFooter />
-        <WhatsappFab />
-      </body>
+      <body><CartProvider><SiteHeader /><main>{children}</main><SiteFooter /><WhatsappFab /></CartProvider></body>
     </html>
   );
 }
