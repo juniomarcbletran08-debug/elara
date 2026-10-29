@@ -30,8 +30,8 @@ export async function PATCH(request:Request,{params}:{params:Promise<{id:string}
     let imageList:unknown;try{imageList=JSON.parse(imagesJson)}catch{imageList=[]}
     if(b.status==="published"){
       if(!Array.isArray(imageList)||imageList.length===0||!imageList.every(secureImageUrl))return Response.json({error:"Un producto publicado debe tener al menos una imagen HTTPS válida."},{status:400});
-      const count=await db.prepare("SELECT COUNT(*) AS count FROM product_variants WHERE product_id=? AND active=1").bind(id).first<{count:number}>();
-      if(Number(count?.count||0)<1)return Response.json({error:"Añade al menos una variante activa con su talla, color y stock antes de publicar."},{status:400});
+      const count=await db.prepare("SELECT COUNT(*) AS count FROM product_variants WHERE product_id=? AND active=1 AND stock_on_hand>stock_reserved").bind(id).first<{count:number}>();
+      if(Number(count?.count||0)<1)return Response.json({error:"Añade al menos una variante activa con stock disponible antes de publicar."},{status:400});
     }
     if(categoryId!==null){const c=await db.prepare("SELECT id FROM categories WHERE id=?").bind(categoryId).first<{id:string}>();if(!c)return Response.json({error:"La categoría no existe."},{status:400});}
     await db.prepare("UPDATE products SET name=?,slug=?,description=?,category_id=?,price_cents=?,sale_price_cents=?,sku=?,images_json=?,status=?,updated_at=CURRENT_TIMESTAMP WHERE id=?")
@@ -42,5 +42,14 @@ export async function PATCH(request:Request,{params}:{params:Promise<{id:string}
 export async function DELETE(request:Request,{params}:{params:Promise<{id:string}>}){
   if(!sameOrigin(request))return Response.json({error:"Origen no permitido."},{status:403});
   if(!(await isAdminAuthorized(request)))return Response.json({error:"No autorizado."},{status:401});
-  const {id}=await params;try{const db=await getDb();const product=await db.prepare("SELECT id FROM products WHERE id=?").bind(id).first<{id:string}>();if(!product)return Response.json({error:"Producto no encontrado."},{status:404});await db.prepare("DELETE FROM products WHERE id=?").bind(id).run();return Response.json({deleted:true},{headers:{"Cache-Control":"no-store"}})}catch{return Response.json({error:"No se pudo eliminar el producto."},{status:409})}
+  const {id}=await params;try{
+    const db=await getDb();
+    const product=await db.prepare("SELECT id FROM products WHERE id=?").bind(id).first<{id:string}>();
+    if(!product)return Response.json({error:"Producto no encontrado."},{status:404});
+    const linked=await db.prepare("SELECT id FROM order_items WHERE product_id=? LIMIT 1").bind(id).first<{id:string}>();
+    const reserved=await db.prepare("SELECT id FROM product_variants WHERE product_id=? AND stock_reserved>0 LIMIT 1").bind(id).first<{id:string}>();
+    if(linked||reserved){await db.prepare("UPDATE products SET status='archived',updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(id).run();return Response.json({deleted:false,archived:true},{headers:{"Cache-Control":"no-store"}})}
+    await db.prepare("DELETE FROM products WHERE id=?").bind(id).run();
+    return Response.json({deleted:true},{headers:{"Cache-Control":"no-store"}});
+  }catch{return Response.json({error:"No se pudo eliminar el producto."},{status:409})}
 }
