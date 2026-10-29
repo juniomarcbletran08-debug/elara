@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./elara-refresh.css";
 
 :root{--obsidian:#111111;--ivory:#F8F5EF;--champagne:#C6A66B;--white:#FFFFFF;--stone:#77736D;--line:rgba(17,17,17,.16)}
 *{box-sizing:border-box}
