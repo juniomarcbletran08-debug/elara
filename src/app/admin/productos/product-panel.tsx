@@ -125,22 +125,23 @@ export function ProductPanel() {
         const data = await res.json().catch(() => ({}));
         if (res.status === 401) { router.replace("/admin/login"); return; }
         if (!res.ok || typeof data.product?.id !== "string") throw new Error(data.error || "No se pudo crear el producto.");
-        productId = data.product.id;
+        const createdProductId: string = data.product.id;
+        productId = createdProductId;
         const variantSku = sku.slice(0, 52) + "-V-" + Date.now().toString(36).toUpperCase();
-        const variantRes = await fetch("/api/admin/products/" + encodeURIComponent(productId) + "/variants", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ size: form.size.trim() || "Única", color: form.color.trim() || "Único", sku: variantSku, stock, active: true }), cache: "no-store" });
+        const variantRes = await fetch("/api/admin/products/" + encodeURIComponent(createdProductId) + "/variants", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ size: form.size.trim() || "Única", color: form.color.trim() || "Único", sku: variantSku, stock, active: true }), cache: "no-store" });
         const variantData = await variantRes.json().catch(() => ({}));
         if (variantRes.status === 401) { router.replace("/admin/login"); return; }
         if (!variantRes.ok) {
-          setEditing(productId); setForm(old => ({ ...old, sku, publishNow: false }));
+          setEditing(createdProductId); setForm(old => ({ ...old, sku, publishNow: false }));
           setError("El producto se guardó, pero falta registrar el stock. En el catálogo, pulsa «Tallas y stock» para terminarlo. " + (variantData.error || ""));
           await load(); return;
         }
         if (form.publishNow) {
-          const publishRes = await fetch("/api/admin/products/" + encodeURIComponent(productId) , { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...payload, status: "published" }), cache: "no-store" });
+          const publishRes = await fetch("/api/admin/products/" + encodeURIComponent(createdProductId) , { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...payload, status: "published" }), cache: "no-store" });
           const publishData = await publishRes.json().catch(() => ({}));
           if (publishRes.status === 401) { router.replace("/admin/login"); return; }
           if (!publishRes.ok) {
-            setEditing(productId); setForm(old => ({ ...old, sku, publishNow: false, status: "draft" }));
+            setEditing(createdProductId); setForm(old => ({ ...old, sku, publishNow: false, status: "draft" }));
             setError("El producto y el stock se guardaron como borrador, pero no se pudo publicar: " + (publishData.error || "revisa los datos."));
             await load(); return;
           }
