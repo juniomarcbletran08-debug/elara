@@ -17,11 +17,21 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
       - name: Install dependencies
         run: npm install
       - name: TypeScript
         run: npm run typecheck
       - name: Unit tests
         run: npm test
-      - name: Production build
+      - name: Build static site
         run: npm run build
+      - name: Package Cloudflare Pages ZIP
+        run: cd out && zip -r ../elara-cloudflare-pages.zip .
+      - name: Upload Cloudflare Pages ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: elara-cloudflare-pages
+          path: elara-cloudflare-pages.zip
+          if-no-files-found: error
+          retention-days: 14
